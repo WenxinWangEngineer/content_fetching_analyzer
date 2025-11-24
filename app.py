@@ -311,14 +311,14 @@ def main():
         # 排序后重新设置索引从1开始
         df_display = df_sorted.copy().reset_index(drop=True)
         df_display.index = df_display.index + 1
-        df_display['clickable_title'] = df_sorted.reset_index(drop=True)['link']
         
         # 紧凑表格显示
         st.dataframe(
-            df_display[['clickable_title', 'view_count', 'duration', 'published_date', 'is_voiceover']],
+            df_display[['title', 'link', 'view_count', 'duration', 'published_date', 'is_voiceover']],
             use_container_width=True, height=400,
             column_config={
-                'clickable_title': st.column_config.LinkColumn('标题', display_text=df_sorted['title'].values, width='large'),
+                'title': st.column_config.TextColumn('标题', width='large'),
+                'link': st.column_config.LinkColumn('🔗', width='small'),
                 'view_count': st.column_config.NumberColumn('观看量', width='small'),
                 'duration': st.column_config.TextColumn('时长', width='small'),
                 'published_date': st.column_config.TextColumn('发布日期', width='medium'),
