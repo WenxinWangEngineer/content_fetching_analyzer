@@ -266,12 +266,17 @@ def main():
                     statistics = video['statistics']
                     content_details = video['contentDetails']
                     
+                    # 解析发布日期并添加星期几
+                    pub_date = datetime.fromisoformat(snippet['publishedAt'][:10])
+                    weekday_cn = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][pub_date.weekday()]
+                    formatted_date = f"{snippet['publishedAt'][:10]} ({weekday_cn})"
+                    
                     video_data.append({
                         'title': snippet['title'],
                         'link': f"https://www.youtube.com/watch?v={video['id']}",
                         'view_count': int(statistics.get('viewCount', 0)),
                         'duration': parse_duration(content_details['duration']),
-                        'published_date': snippet['publishedAt'][:10],
+                        'published_date': formatted_date,
                         'description': snippet.get('description', '')[:500],
                         'hashtags': extract_hashtags(snippet.get('description', '')),
                         'is_voiceover': detect_voiceover(snippet['title'], snippet.get('description', ''))
