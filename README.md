@@ -31,7 +31,45 @@ cd content_fetching_analyzer
 
 ## Usage
 
-[Usage instructions will be added as the project develops]
+### 快速开始
+
+1. 安装依赖:
+```bash
+pip install -r requirements.txt
+```
+
+2. 获取YouTube API密钥:
+   - 访问 [Google Cloud Console](https://console.developers.google.com/)
+   - 创建项目并启用YouTube Data API v3
+   - 创建API密钥
+
+3. 启动应用:
+```bash
+python run.py
+# 或者
+streamlit run app.py
+```
+
+4. 在浏览器中打开 http://localhost:8501
+
+### 功能说明
+
+- 🔗 输入YouTube频道链接
+- 🔑 输入YouTube API密钥
+- 📊 自动分析频道前100个视频（或全部视频如果少于100个）
+- 📥 导出CSV文件包含所有视频数据
+
+### 输出数据
+
+CSV文件包含以下字段:
+- 视频标题
+- 视频链接
+- 观看量
+- 视频时长
+- 发布日期
+- 视频描述
+- 标签
+- 配音检测结果
 
 ## Contributing
 

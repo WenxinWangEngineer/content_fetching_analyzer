@@ -1,0 +1,293 @@
+import streamlit as st
+import pandas as pd
+from googleapiclient.discovery import build
+import re
+from datetime import datetime
+import csv
+
+st.set_page_config(
+    page_title="📊 YouTube Analyzer",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+# 黑白极简样式
+st.markdown("""
+<style>
+    .main { background-color: #ffffff; }
+    .stApp { background-color: #ffffff; }
+    .css-1d391kg { background-color: #000000; }
+    .stButton > button {
+        background-color: #000000;
+        color: #ffffff;
+        border: 2px solid #000000;
+        border-radius: 4px;
+        font-weight: bold;
+    }
+    .stButton > button:hover {
+        background-color: #ffffff;
+        color: #000000;
+        border: 2px solid #000000;
+    }
+    .stTextInput > div > div > input {
+        border: 2px solid #000000;
+        border-radius: 4px;
+    }
+    h1 { color: #000000; text-align: center; }
+    .metric-card {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 4px;
+        border: 1px solid #000000;
+        text-align: center;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+def extract_channel_id(url):
+    """从YouTube频道URL提取频道ID"""
+    patterns = [
+        r'youtube\.com/channel/([a-zA-Z0-9_-]+)',
+        r'youtube\.com/c/([a-zA-Z0-9_-]+)',
+        r'youtube\.com/@([a-zA-Z0-9_-]+)',
+        r'youtube\.com/user/([a-zA-Z0-9_-]+)'
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+    return None
+
+def get_channel_info(youtube, channel_input):
+    """获取频道信息"""
+    try:
+        if channel_input.startswith('UC') and len(channel_input) == 24:
+            # 直接是频道ID
+            response = youtube.channels().list(
+                part='snippet,statistics',
+                id=channel_input
+            ).execute()
+        else:
+            # 尝试用户名或自定义URL
+            response = youtube.channels().list(
+                part='snippet,statistics',
+                forUsername=channel_input
+            ).execute()
+            
+            if not response['items']:
+                # 尝试搜索
+                search_response = youtube.search().list(
+                    part='snippet',
+                    q=channel_input,
+                    type='channel',
+                    maxResults=1
+                ).execute()
+                
+                if search_response['items']:
+                    channel_id = search_response['items'][0]['snippet']['channelId']
+                    response = youtube.channels().list(
+                        part='snippet,statistics',
+                        id=channel_id
+                    ).execute()
+        
+        if response['items']:
+            return response['items'][0]
+    except:
+        pass
+    return None
+
+def get_videos(youtube, channel_id, max_results=100):
+    """获取频道视频"""
+    videos = []
+    
+    # 获取上传播放列表ID
+    channel_response = youtube.channels().list(
+        part='contentDetails',
+        id=channel_id
+    ).execute()
+    
+    uploads_playlist_id = channel_response['items'][0]['contentDetails']['relatedPlaylists']['uploads']
+    
+    # 获取视频列表
+    next_page_token = None
+    while len(videos) < max_results:
+        playlist_response = youtube.playlistItems().list(
+            part='snippet',
+            playlistId=uploads_playlist_id,
+            maxResults=min(50, max_results - len(videos)),
+            pageToken=next_page_token,
+            order='date'
+        ).execute()
+        
+        video_ids = [item['snippet']['resourceId']['videoId'] for item in playlist_response['items']]
+        
+        # 获取视频详细信息
+        videos_response = youtube.videos().list(
+            part='snippet,statistics,contentDetails',
+            id=','.join(video_ids)
+        ).execute()
+        
+        for video in videos_response['items']:
+            videos.append(video)
+        
+        next_page_token = playlist_response.get('nextPageToken')
+        if not next_page_token:
+            break
+    
+    return videos[:max_results]
+
+def parse_duration(duration):
+    """解析YouTube时长格式"""
+    match = re.match(r'PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?', duration)
+    if match:
+        hours = int(match.group(1) or 0)
+        minutes = int(match.group(2) or 0)
+        seconds = int(match.group(3) or 0)
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+    return "00:00:00"
+
+def extract_hashtags(description):
+    """提取描述中的标签"""
+    hashtags = re.findall(r'#\w+', description)
+    return ', '.join(hashtags) if hashtags else ''
+
+def detect_voiceover(title, description):
+    """简单的配音检测（基于关键词）"""
+    voiceover_keywords = ['voiceover', 'narration', 'commentary', '配音', '解说', 'voice over']
+    text = (title + ' ' + description).lower()
+    return any(keyword in text for keyword in voiceover_keywords)
+
+def main():
+    st.title("📊 YouTube频道分析器")
+    st.markdown("---")
+    
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        st.markdown("### 🔗 频道信息")
+        channel_url = st.text_input("YouTube频道链接", placeholder="https://www.youtube.com/@channelname")
+        
+    with col2:
+        st.markdown("### 🔑 API密钥")
+        api_key = st.text_input("YouTube API Key", type="password")
+    
+    if st.button("🚀 开始分析", use_container_width=True):
+        if not channel_url or not api_key:
+            st.error("❌ 请填写频道链接和API密钥")
+            return
+        
+        try:
+            youtube = build('youtube', 'v3', developerKey=api_key)
+            
+            with st.spinner("🔍 正在获取频道信息..."):
+                # 提取频道标识
+                channel_input = extract_channel_id(channel_url)
+                if not channel_input:
+                    channel_input = channel_url.split('/')[-1].replace('@', '')
+                
+                # 获取频道信息
+                channel_info = get_channel_info(youtube, channel_input)
+                if not channel_info:
+                    st.error("❌ 无法找到频道，请检查链接")
+                    return
+                
+                channel_id = channel_info['id']
+                channel_title = channel_info['snippet']['title']
+                video_count = int(channel_info['statistics']['videoCount'])
+                
+                st.success(f"✅ 找到频道: {channel_title}")
+                
+                # 显示频道统计
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.markdown(f"""
+                    <div class="metric-card">
+                        <h3>📺 总视频数</h3>
+                        <h2>{video_count:,}</h2>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                with col2:
+                    subscriber_count = int(channel_info['statistics']['subscriberCount'])
+                    st.markdown(f"""
+                    <div class="metric-card">
+                        <h3>👥 订阅者</h3>
+                        <h2>{subscriber_count:,}</h2>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                with col3:
+                    view_count = int(channel_info['statistics']['viewCount'])
+                    st.markdown(f"""
+                    <div class="metric-card">
+                        <h3>👀 总观看量</h3>
+                        <h2>{view_count:,}</h2>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            with st.spinner("📊 正在分析视频数据..."):
+                # 确定要获取的视频数量
+                max_videos = min(100, video_count)
+                videos = get_videos(youtube, channel_id, max_videos)
+                
+                # 处理视频数据
+                video_data = []
+                for video in videos:
+                    snippet = video['snippet']
+                    statistics = video['statistics']
+                    content_details = video['contentDetails']
+                    
+                    video_data.append({
+                        'title': snippet['title'],
+                        'link': f"https://www.youtube.com/watch?v={video['id']}",
+                        'view_count': int(statistics.get('viewCount', 0)),
+                        'duration': parse_duration(content_details['duration']),
+                        'published_date': snippet['publishedAt'][:10],
+                        'description': snippet.get('description', '')[:500],
+                        'hashtags': extract_hashtags(snippet.get('description', '')),
+                        'is_voiceover': detect_voiceover(snippet['title'], snippet.get('description', ''))
+                    })
+                
+                # 创建DataFrame
+                df = pd.DataFrame(video_data)
+                
+                # 显示结果
+                st.markdown("---")
+                st.markdown(f"### 📋 视频列表 ({len(video_data)} 个视频)")
+                
+                # 保存CSV
+                csv_filename = f"{channel_title.replace(' ', '_')}_videos_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+                df.to_csv(csv_filename, index=False, encoding='utf-8-sig')
+                
+                # 显示数据表格
+                st.dataframe(
+                    df[['title', 'view_count', 'duration', 'published_date', 'is_voiceover']],
+                    use_container_width=True,
+                    column_config={
+                        'title': '标题',
+                        'view_count': '观看量',
+                        'duration': '时长',
+                        'published_date': '发布日期',
+                        'is_voiceover': '配音检测'
+                    }
+                )
+                
+                # 下载按钮
+                with open(csv_filename, 'rb') as f:
+                    st.download_button(
+                        label="📥 下载完整CSV文件",
+                        data=f.read(),
+                        file_name=csv_filename,
+                        mime='text/csv',
+                        use_container_width=True
+                    )
+                
+                st.success(f"✅ 分析完成！共处理 {len(video_data)} 个视频")
+                
+        except Exception as e:
+            st.error(f"❌ 发生错误: {str(e)}")
+
+if __name__ == "__main__":
+    main()
