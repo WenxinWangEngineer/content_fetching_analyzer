@@ -374,7 +374,7 @@ def main():
         with col3:
             csv_data = df_sorted.to_csv(index=False, encoding='utf-8-sig')
             csv_filename = f"{st.session_state.channel_title.replace(' ', '_')}_videos_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-            st.download_button("📥 CSV", csv_data.encode('utf-8-sig'), csv_filename, "text/csv", use_container_width=True)
+            st.download_button("📥 CSV", csv_data.encode('utf-8-sig'), csv_filename, "text/csv", use_container_width=True, type="secondary")
         
         # 排序后重新设置索引从1开始
         df_display = df_sorted.copy().reset_index(drop=True)
