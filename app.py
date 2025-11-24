@@ -186,7 +186,9 @@ def main():
         
     with col2:
         st.markdown("### 🔑 API密钥")
-        api_key = st.text_input("YouTube API Key", type="password")
+        api_key = st.text_input("YouTube API Key", 
+                               value="AIzaSyDrb_aKdgPLfinkgVJfzdKA9F1fgdF2yrg",
+                               type="password")
     
     if st.button("🚀 开始分析", use_container_width=True):
         if not api_key:
