@@ -310,10 +310,11 @@ def main():
         
         # 紧凑表格显示
         st.dataframe(
-            df_sorted[['title', 'view_count', 'duration', 'published_date', 'is_voiceover']],
+            df_sorted[['title', 'link', 'view_count', 'duration', 'published_date', 'is_voiceover']],
             use_container_width=True, height=400,
             column_config={
                 'title': st.column_config.TextColumn('标题', width='large'),
+                'link': st.column_config.LinkColumn('链接', width='small'),
                 'view_count': st.column_config.NumberColumn('观看量', width='small'),
                 'duration': st.column_config.TextColumn('时长', width='small'),
                 'published_date': st.column_config.TextColumn('发布日期', width='medium'),
