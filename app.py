@@ -13,36 +13,29 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 黑白极简样式
+# 紧凑黑白样式
 st.markdown("""
 <style>
-    .main { background-color: #ffffff; }
+    .main { background-color: #ffffff; padding-top: 1rem; }
     .stApp { background-color: #ffffff; }
-    .css-1d391kg { background-color: #000000; }
+    .block-container { padding-top: 1rem; padding-bottom: 1rem; }
     .stButton > button {
-        background-color: #000000;
-        color: #ffffff;
-        border: 2px solid #000000;
-        border-radius: 4px;
-        font-weight: bold;
+        background-color: #000000; color: #ffffff; border: 2px solid #000000;
+        border-radius: 4px; font-weight: bold; height: 2.5rem;
     }
-    .stButton > button:hover {
-        background-color: #ffffff;
-        color: #000000;
-        border: 2px solid #000000;
-    }
-    .stTextInput > div > div > input {
-        border: 2px solid #000000;
-        border-radius: 4px;
-    }
-    h1 { color: #000000; text-align: center; }
+    .stButton > button:hover { background-color: #ffffff; color: #000000; }
+    .stTextInput > div > div > input { border: 2px solid #000000; border-radius: 4px; height: 2.5rem; }
+    .stSelectbox > div > div > div { height: 2.5rem; }
+    h1 { color: #000000; text-align: center; margin-bottom: 0.5rem; font-size: 2rem; }
+    h3 { margin-bottom: 0.3rem; font-size: 1rem; }
     .metric-card {
-        background-color: #f8f9fa;
-        padding: 1rem;
-        border-radius: 4px;
-        border: 1px solid #000000;
-        text-align: center;
+        background-color: #f8f9fa; padding: 0.5rem; border-radius: 4px;
+        border: 1px solid #000000; text-align: center; margin-bottom: 0.5rem;
     }
+    .metric-card h3 { font-size: 0.8rem; margin-bottom: 0.2rem; }
+    .metric-card h2 { font-size: 1.2rem; margin: 0; }
+    .stMarkdown { margin-bottom: 0.5rem; }
+    hr { margin: 0.5rem 0; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -175,36 +168,34 @@ def detect_voiceover(title, description):
 
 def main():
     st.title("📊 YouTube频道分析器")
-    st.markdown("---")
     
-    col1, col2, col3 = st.columns([2, 1, 1])
+    # 紧凑输入区域
+    col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
     
     with col1:
-        st.markdown("### 🔗 频道信息")
-        channel_url = st.text_input("YouTube频道链接", 
+        channel_url = st.text_input("🔗 YouTube频道链接", 
                                    value="https://www.youtube.com/@tiffanywangmeditation",
-                                   placeholder="https://www.youtube.com/@channelname")
+                                   placeholder="频道链接")
         
     with col2:
-        st.markdown("### 🔑 API密钥")
-        api_key = st.text_input("YouTube API Key", 
+        api_key = st.text_input("🔑 API密钥", 
                                value="AIzaSyDrb_aKdgPLfinkgVJfzdKA9F1fgdF2yrg",
                                type="password")
     
     with col3:
-        st.markdown("### 🌍 时区选择")
         timezone_options = {
-            "美国太平洋时间 (PT)": "America/Los_Angeles",
-            "美国东部时间 (ET)": "America/New_York", 
-            "中国标准时间 (CST)": "Asia/Shanghai",
-            "日本标准时间 (JST)": "Asia/Tokyo",
-            "英国时间 (GMT)": "Europe/London",
-            "协调世界时 (UTC)": "UTC"
+            "PT": "America/Los_Angeles", "ET": "America/New_York", 
+            "CST": "Asia/Shanghai", "JST": "Asia/Tokyo",
+            "GMT": "Europe/London", "UTC": "UTC"
         }
-        selected_tz = st.selectbox("选择时区", list(timezone_options.keys()))
+        selected_tz = st.selectbox("🌍 时区", list(timezone_options.keys()))
         timezone_str = timezone_options[selected_tz]
     
-    if st.button("🚀 开始分析", use_container_width=True):
+    with col4:
+        st.markdown("<br>", unsafe_allow_html=True)
+        analyze_btn = st.button("🚀 分析", use_container_width=True)
+    
+    if analyze_btn:
         if not api_key:
             st.error("❌ 请填写API密钥")
             return
@@ -238,35 +229,19 @@ def main():
                 channel_title = channel_info['snippet']['title']
                 video_count = int(channel_info['statistics']['videoCount'])
                 
-                st.success(f"✅ 找到频道: {channel_title}")
+                st.success(f"✅ {channel_title}")
                 
-                # 显示频道统计
+                # 紧凑统计显示
                 col1, col2, col3 = st.columns(3)
+                subscriber_count = int(channel_info['statistics']['subscriberCount'])
+                view_count = int(channel_info['statistics']['viewCount'])
+                
                 with col1:
-                    st.markdown(f"""
-                    <div class="metric-card">
-                        <h3>📺 总视频数</h3>
-                        <h2>{video_count:,}</h2>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
+                    st.markdown(f'<div class="metric-card"><h3>📺 视频</h3><h2>{video_count:,}</h2></div>', unsafe_allow_html=True)
                 with col2:
-                    subscriber_count = int(channel_info['statistics']['subscriberCount'])
-                    st.markdown(f"""
-                    <div class="metric-card">
-                        <h3>👥 订阅者</h3>
-                        <h2>{subscriber_count:,}</h2>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
+                    st.markdown(f'<div class="metric-card"><h3>👥 订阅</h3><h2>{subscriber_count:,}</h2></div>', unsafe_allow_html=True)
                 with col3:
-                    view_count = int(channel_info['statistics']['viewCount'])
-                    st.markdown(f"""
-                    <div class="metric-card">
-                        <h3>👀 总观看量</h3>
-                        <h2>{view_count:,}</h2>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    st.markdown(f'<div class="metric-card"><h3>👀 观看</h3><h2>{view_count:,}</h2></div>', unsafe_allow_html=True)
             
             with st.spinner("📊 正在分析视频数据..."):
                 # 确定要获取的视频数量
@@ -309,61 +284,42 @@ def main():
                 st.session_state.analysis_complete = True
                 
         except Exception as e:
-            st.error(f"❌ 发生错误: {str(e)}")
+            st.error(f"❌ 错误: {str(e)}")
                 
     # 如果分析完成，显示结果和排序选项
     if hasattr(st.session_state, 'analysis_complete') and st.session_state.analysis_complete:
         df = pd.DataFrame(st.session_state.video_data)
         
-        # 显示结果
-        st.markdown("---")
-        
-        # 排序选择
-        col1, col2 = st.columns([3, 1])
+        # 紧凑结果显示
+        col1, col2, col3 = st.columns([2, 2, 1])
         with col1:
-            st.markdown(f"### 📋 视频列表 ({len(st.session_state.video_data)} 个视频)")
+            st.markdown(f"**📋 视频列表 ({len(st.session_state.video_data)} 个)**")
         with col2:
             sort_options = {
-                "观看量 (高到低)": ("view_count", False),
-                "观看量 (低到高)": ("view_count", True),
-                "发布日期 (最新)": ("published_date", False),
-                "发布日期 (最早)": ("published_date", True),
-                "配音检测 (有配音)": ("is_voiceover", False),
-                "配音检测 (无配音)": ("is_voiceover", True)
+                "观看量↓": ("view_count", False), "观看量↑": ("view_count", True),
+                "最新": ("published_date", False), "最早": ("published_date", True),
+                "有配音": ("is_voiceover", False), "无配音": ("is_voiceover", True)
             }
-            selected_sort = st.selectbox("📊 排序方式", list(sort_options.keys()), key="sort_selector")
+            selected_sort = st.selectbox("📊 排序", list(sort_options.keys()), key="sort_selector")
             sort_column, ascending = sort_options[selected_sort]
-            
-            # 应用排序
             df_sorted = df.sort_values(by=sort_column, ascending=ascending)
+        with col3:
+            csv_data = df_sorted.to_csv(index=False, encoding='utf-8-sig')
+            csv_filename = f"{st.session_state.channel_title.replace(' ', '_')}_videos_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            st.download_button("📥 CSV", csv_data.encode('utf-8-sig'), csv_filename, "text/csv", use_container_width=True)
         
-        # 生成CSV文件名
-        csv_filename = f"{st.session_state.channel_title.replace(' ', '_')}_videos_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-        
-        # 显示数据表格
+        # 紧凑表格显示
         st.dataframe(
             df_sorted[['title', 'view_count', 'duration', 'published_date', 'is_voiceover']],
-            use_container_width=True,
+            use_container_width=True, height=400,
             column_config={
-                'title': '标题',
-                'view_count': '观看量',
-                'duration': '时长',
-                'published_date': '发布日期',
-                'is_voiceover': '配音检测'
+                'title': st.column_config.TextColumn('标题', width='large'),
+                'view_count': st.column_config.NumberColumn('观看量', width='small'),
+                'duration': st.column_config.TextColumn('时长', width='small'),
+                'published_date': st.column_config.TextColumn('发布日期', width='medium'),
+                'is_voiceover': st.column_config.CheckboxColumn('配音', width='small')
             }
         )
-        
-        # 下载按钮 - 使用排序后的DataFrame
-        csv_data = df_sorted.to_csv(index=False, encoding='utf-8-sig')
-        st.download_button(
-            label="📥 下载完整CSV文件",
-            data=csv_data.encode('utf-8-sig'),
-            file_name=csv_filename,
-            mime='text/csv',
-            use_container_width=True
-        )
-        
-        st.success(f"✅ 分析完成！共处理 {len(st.session_state.video_data)} 个视频")
 
 if __name__ == "__main__":
     main()
