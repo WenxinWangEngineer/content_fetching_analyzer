@@ -308,6 +308,9 @@ def main():
                 st.session_state.channel_title = channel_title
                 st.session_state.analysis_complete = True
                 
+        except Exception as e:
+            st.error(f"❌ 发生错误: {str(e)}")
+                
     # 如果分析完成，显示结果和排序选项
     if hasattr(st.session_state, 'analysis_complete') and st.session_state.analysis_complete:
         df = pd.DataFrame(st.session_state.video_data)
@@ -361,9 +364,6 @@ def main():
         )
         
         st.success(f"✅ 分析完成！共处理 {len(st.session_state.video_data)} 个视频")
-                
-        except Exception as e:
-            st.error(f"❌ 发生错误: {str(e)}")
 
 if __name__ == "__main__":
     main()
