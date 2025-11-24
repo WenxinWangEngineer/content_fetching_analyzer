@@ -388,6 +388,7 @@ def main():
         html_table += "<table style='width:100%; border-collapse: collapse;'>"
         html_table += "<thead style='position: sticky; top: 0; background-color: #f8f9fa;'>"
         html_table += "<tr style='border: 1px solid #000;'>"
+        html_table += "<th style='padding: 8px; border: 1px solid #000; text-align: center; width: 50px;'>#</th>"
         html_table += "<th style='padding: 8px; border: 1px solid #000; text-align: left;'>标题</th>"
         html_table += "<th style='padding: 8px; border: 1px solid #000; text-align: center;'>观看量</th>"
         html_table += "<th style='padding: 8px; border: 1px solid #000; text-align: center;'>时长</th>"
@@ -397,6 +398,7 @@ def main():
         
         for idx, row in df_display.iterrows():
             html_table += f"<tr style='border: 1px solid #ddd;'>"
+            html_table += f"<td style='padding: 8px; border: 1px solid #ddd; text-align: center; font-weight: bold;'>{idx}</td>"
             html_table += f"<td style='padding: 8px; border: 1px solid #ddd;'><a href='{row['link']}' target='_blank' style='color: #0066cc; text-decoration: none;'>{row['title']}</a></td>"
             html_table += f"<td style='padding: 8px; border: 1px solid #ddd; text-align: center;'>{row['view_count']:,}</td>"
             html_table += f"<td style='padding: 8px; border: 1px solid #ddd; text-align: center;'>{row['duration']}</td>"
