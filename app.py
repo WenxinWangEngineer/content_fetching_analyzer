@@ -4,6 +4,7 @@ from googleapiclient.discovery import build
 import re
 from datetime import datetime
 import csv
+from zoneinfo import ZoneInfo
 
 st.set_page_config(
     page_title="📊 YouTube Analyzer",
@@ -266,10 +267,11 @@ def main():
                     statistics = video['statistics']
                     content_details = video['contentDetails']
                     
-                    # 解析发布日期时间并添加星期几和时区
-                    pub_datetime = datetime.fromisoformat(snippet['publishedAt'].replace('Z', '+00:00'))
-                    weekday_cn = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][pub_datetime.weekday()]
-                    formatted_date = f"{pub_datetime.strftime('%Y-%m-%d %H:%M UTC')} ({weekday_cn})"
+                    # 解析发布日期时间并转换为Pacific Time
+                    pub_datetime_utc = datetime.fromisoformat(snippet['publishedAt'].replace('Z', '+00:00'))
+                    pub_datetime_pt = pub_datetime_utc.astimezone(ZoneInfo('America/Los_Angeles'))
+                    weekday_cn = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][pub_datetime_pt.weekday()]
+                    formatted_date = f"{pub_datetime_pt.strftime('%Y-%m-%d %H:%M PT')} ({weekday_cn})"
                     
                     video_data.append({
                         'title': snippet['title'],
