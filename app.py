@@ -266,10 +266,10 @@ def main():
                     statistics = video['statistics']
                     content_details = video['contentDetails']
                     
-                    # 解析发布日期并添加星期几
-                    pub_date = datetime.fromisoformat(snippet['publishedAt'][:10])
-                    weekday_cn = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][pub_date.weekday()]
-                    formatted_date = f"{snippet['publishedAt'][:10]} ({weekday_cn})"
+                    # 解析发布日期时间并添加星期几
+                    pub_datetime = datetime.fromisoformat(snippet['publishedAt'].replace('Z', '+00:00'))
+                    weekday_cn = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][pub_datetime.weekday()]
+                    formatted_date = f"{pub_datetime.strftime('%Y-%m-%d %H:%M')} ({weekday_cn})"
                     
                     video_data.append({
                         'title': snippet['title'],
