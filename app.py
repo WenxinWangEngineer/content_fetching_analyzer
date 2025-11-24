@@ -177,7 +177,7 @@ def main():
     st.title("📊 YouTube频道分析器")
     st.markdown("---")
     
-    col1, col2 = st.columns([2, 1])
+    col1, col2, col3 = st.columns([2, 1, 1])
     
     with col1:
         st.markdown("### 🔗 频道信息")
@@ -190,6 +190,19 @@ def main():
         api_key = st.text_input("YouTube API Key", 
                                value="AIzaSyDrb_aKdgPLfinkgVJfzdKA9F1fgdF2yrg",
                                type="password")
+    
+    with col3:
+        st.markdown("### 🌍 时区选择")
+        timezone_options = {
+            "美国太平洋时间 (PT)": "America/Los_Angeles",
+            "美国东部时间 (ET)": "America/New_York", 
+            "中国标准时间 (CST)": "Asia/Shanghai",
+            "日本标准时间 (JST)": "Asia/Tokyo",
+            "英国时间 (GMT)": "Europe/London",
+            "协调世界时 (UTC)": "UTC"
+        }
+        selected_tz = st.selectbox("选择时区", list(timezone_options.keys()))
+        timezone_str = timezone_options[selected_tz]
     
     if st.button("🚀 开始分析", use_container_width=True):
         if not api_key:
@@ -267,11 +280,17 @@ def main():
                     statistics = video['statistics']
                     content_details = video['contentDetails']
                     
-                    # 解析发布日期时间并转换为Pacific Time
+                    # 解析发布日期时间并转换为选定时区
                     pub_datetime_utc = datetime.fromisoformat(snippet['publishedAt'].replace('Z', '+00:00'))
-                    pub_datetime_pt = pub_datetime_utc.astimezone(ZoneInfo('America/Los_Angeles'))
-                    weekday_cn = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][pub_datetime_pt.weekday()]
-                    formatted_date = f"{pub_datetime_pt.strftime('%Y-%m-%d %H:%M PT')} ({weekday_cn})"
+                    if timezone_str == 'UTC':
+                        pub_datetime_local = pub_datetime_utc
+                        tz_abbr = 'UTC'
+                    else:
+                        pub_datetime_local = pub_datetime_utc.astimezone(ZoneInfo(timezone_str))
+                        tz_abbr = selected_tz.split('(')[-1].replace(')', '')
+                    
+                    weekday_cn = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][pub_datetime_local.weekday()]
+                    formatted_date = f"{pub_datetime_local.strftime('%Y-%m-%d %H:%M')} {tz_abbr} ({weekday_cn})"
                     
                     video_data.append({
                         'title': snippet['title'],
