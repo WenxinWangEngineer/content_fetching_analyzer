@@ -303,58 +303,64 @@ def main():
                         'is_voiceover': detect_voiceover(snippet['title'], snippet.get('description', ''))
                     })
                 
-                # 创建DataFrame
-                df = pd.DataFrame(video_data)
+                # 存储数据到session state
+                st.session_state.video_data = video_data
+                st.session_state.channel_title = channel_title
+                st.session_state.analysis_complete = True
                 
-                # 显示结果
-                st.markdown("---")
-                
-                # 排序选择
-                col1, col2 = st.columns([3, 1])
-                with col1:
-                    st.markdown(f"### 📋 视频列表 ({len(video_data)} 个视频)")
-                with col2:
-                    sort_options = {
-                        "观看量 (高到低)": ("view_count", False),
-                        "观看量 (低到高)": ("view_count", True),
-                        "发布日期 (最新)": ("published_date", False),
-                        "发布日期 (最早)": ("published_date", True),
-                        "配音检测 (有配音)": ("is_voiceover", False),
-                        "配音检测 (无配音)": ("is_voiceover", True)
-                    }
-                    selected_sort = st.selectbox("📊 排序方式", list(sort_options.keys()))
-                    sort_column, ascending = sort_options[selected_sort]
-                    
-                    # 应用排序
-                    df_sorted = df.sort_values(by=sort_column, ascending=ascending)
-                
-                # 生成CSV文件名
-                csv_filename = f"{channel_title.replace(' ', '_')}_videos_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-                
-                # 显示数据表格
-                st.dataframe(
-                    df_sorted[['title', 'view_count', 'duration', 'published_date', 'is_voiceover']],
-                    use_container_width=True,
-                    column_config={
-                        'title': '标题',
-                        'view_count': '观看量',
-                        'duration': '时长',
-                        'published_date': '发布日期',
-                        'is_voiceover': '配音检测'
-                    }
-                )
-                
-                # 下载按钮 - 使用排序后的DataFrame
-                csv_data = df_sorted.to_csv(index=False, encoding='utf-8-sig')
-                st.download_button(
-                    label="📥 下载完整CSV文件",
-                    data=csv_data.encode('utf-8-sig'),
-                    file_name=csv_filename,
-                    mime='text/csv',
-                    use_container_width=True
-                )
-                
-                st.success(f"✅ 分析完成！共处理 {len(video_data)} 个视频")
+    # 如果分析完成，显示结果和排序选项
+    if hasattr(st.session_state, 'analysis_complete') and st.session_state.analysis_complete:
+        df = pd.DataFrame(st.session_state.video_data)
+        
+        # 显示结果
+        st.markdown("---")
+        
+        # 排序选择
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.markdown(f"### 📋 视频列表 ({len(st.session_state.video_data)} 个视频)")
+        with col2:
+            sort_options = {
+                "观看量 (高到低)": ("view_count", False),
+                "观看量 (低到高)": ("view_count", True),
+                "发布日期 (最新)": ("published_date", False),
+                "发布日期 (最早)": ("published_date", True),
+                "配音检测 (有配音)": ("is_voiceover", False),
+                "配音检测 (无配音)": ("is_voiceover", True)
+            }
+            selected_sort = st.selectbox("📊 排序方式", list(sort_options.keys()), key="sort_selector")
+            sort_column, ascending = sort_options[selected_sort]
+            
+            # 应用排序
+            df_sorted = df.sort_values(by=sort_column, ascending=ascending)
+        
+        # 生成CSV文件名
+        csv_filename = f"{st.session_state.channel_title.replace(' ', '_')}_videos_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        
+        # 显示数据表格
+        st.dataframe(
+            df_sorted[['title', 'view_count', 'duration', 'published_date', 'is_voiceover']],
+            use_container_width=True,
+            column_config={
+                'title': '标题',
+                'view_count': '观看量',
+                'duration': '时长',
+                'published_date': '发布日期',
+                'is_voiceover': '配音检测'
+            }
+        )
+        
+        # 下载按钮 - 使用排序后的DataFrame
+        csv_data = df_sorted.to_csv(index=False, encoding='utf-8-sig')
+        st.download_button(
+            label="📥 下载完整CSV文件",
+            data=csv_data.encode('utf-8-sig'),
+            file_name=csv_filename,
+            mime='text/csv',
+            use_container_width=True
+        )
+        
+        st.success(f"✅ 分析完成！共处理 {len(st.session_state.video_data)} 个视频")
                 
         except Exception as e:
             st.error(f"❌ 发生错误: {str(e)}")
