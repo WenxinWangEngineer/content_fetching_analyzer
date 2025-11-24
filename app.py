@@ -213,7 +213,7 @@ def main():
     st.title("📊 YouTube频道分析器")
     
     # 紧凑输入区域
-    col1, col2, col3, col4, col5 = st.columns([3, 2, 1, 1, 1])
+    col1, col2, col3, col4, col5, col6 = st.columns([3, 2, 1, 1, 1, 1])
     
     with col1:
         channel_url = st.text_input("🔗 YouTube频道链接", 
@@ -226,6 +226,9 @@ def main():
                                type="password")
     
     with col3:
+        video_count = st.number_input("📊 视频数量", min_value=1, value=100, step=1)
+    
+    with col4:
         timezone_options = {
             "PT": "America/Los_Angeles", "ET": "America/New_York", 
             "CST": "Asia/Shanghai", "JST": "Asia/Tokyo",
@@ -234,10 +237,10 @@ def main():
         selected_tz = st.selectbox("🌍 时区", list(timezone_options.keys()))
         timezone_str = timezone_options[selected_tz]
     
-    with col4:
+    with col5:
         use_audio = st.checkbox("🎧 音频分析", value=False, disabled=not AUDIO_ANALYSIS_AVAILABLE)
     
-    with col5:
+    with col6:
         st.markdown("<br>", unsafe_allow_html=True)
         analyze_btn = st.button("🚀 分析", use_container_width=True)
     
@@ -291,7 +294,7 @@ def main():
             
             with st.spinner("📊 正在分析视频数据..."):
                 # 确定要获取的视频数量
-                max_videos = min(100, video_count)
+                max_videos = min(video_count, int(channel_info['statistics']['videoCount']))
                 videos = get_videos(youtube, channel_id, max_videos)
                 
                 # 处理视频数据
