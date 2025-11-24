@@ -217,7 +217,7 @@ def main():
     
     with col1:
         channel_url = st.text_input("🔗 YouTube频道链接", 
-                                   value="https://www.youtube.com/@tiffanywangmeditation",
+                                   value="https://www.youtube.com/@jasonstephensonmeditation",
                                    placeholder="频道链接")
         
     with col2:
@@ -248,7 +248,7 @@ def main():
         
         # 如果没有输入频道链接，使用默认频道
         if not channel_url:
-            channel_url = "https://www.youtube.com/@tiffanywangmeditation"
+            channel_url = "https://www.youtube.com/@jasonstephensonmeditation"
         
         try:
             youtube = build('youtube', 'v3', developerKey=api_key)
