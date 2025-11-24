@@ -35,7 +35,7 @@ cd content_fetching_analyzer
 
 1. 安装依赖:
 ```bash
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 2. 获取YouTube API密钥:
