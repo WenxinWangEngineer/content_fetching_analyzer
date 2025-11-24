@@ -46,8 +46,6 @@ pip3 install -r requirements.txt
 3. 启动应用:
 ```bash
 python3 run.py
-# 或者
-streamlit run app.py
 ```
 
 4. 在浏览器中打开 http://localhost:8501
