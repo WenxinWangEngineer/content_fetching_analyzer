@@ -284,9 +284,8 @@ def main():
                 st.markdown("---")
                 st.markdown(f"### 📋 视频列表 ({len(video_data)} 个视频)")
                 
-                # 保存CSV
+                # 生成CSV文件名
                 csv_filename = f"{channel_title.replace(' ', '_')}_videos_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-                df.to_csv(csv_filename, index=False, encoding='utf-8-sig')
                 
                 # 显示数据表格
                 st.dataframe(
@@ -301,15 +300,15 @@ def main():
                     }
                 )
                 
-                # 下载按钮
-                with open(csv_filename, 'rb') as f:
-                    st.download_button(
-                        label="📥 下载完整CSV文件",
-                        data=f.read(),
-                        file_name=csv_filename,
-                        mime='text/csv',
-                        use_container_width=True
-                    )
+                # 下载按钮 - 直接使用DataFrame转换为CSV字符串
+                csv_data = df.to_csv(index=False, encoding='utf-8-sig')
+                st.download_button(
+                    label="📥 下载完整CSV文件",
+                    data=csv_data.encode('utf-8-sig'),
+                    file_name=csv_filename,
+                    mime='text/csv',
+                    use_container_width=True
+                )
                 
                 st.success(f"✅ 分析完成！共处理 {len(video_data)} 个视频")
                 
