@@ -376,23 +376,37 @@ def main():
             csv_filename = f"{st.session_state.channel_title.replace(' ', '_')}_videos_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
             st.download_button("📥 CSV", csv_data.encode('utf-8-sig'), csv_filename, "text/csv", use_container_width=True, type="secondary")
         
-        # 排序后重新设置索引从1开始
+        # 排序后重新设置索引从1开始并创建可点击标题
         df_display = df_sorted.copy().reset_index(drop=True)
         df_display.index = df_display.index + 1
-        
-        # 紧凑表格显示
-        st.dataframe(
-            df_display[['title', 'link', 'view_count', 'duration', 'published_date', 'is_voiceover']],
-            use_container_width=True, height=400,
-            column_config={
-                'title': st.column_config.TextColumn('标题', width='large'),
-                'link': st.column_config.LinkColumn('🔗', width='small'),
-                'view_count': st.column_config.NumberColumn('观看量', width='small'),
-                'duration': st.column_config.TextColumn('时长', width='small'),
-                'published_date': st.column_config.TextColumn('发布日期', width='medium'),
-                'is_voiceover': st.column_config.CheckboxColumn('🎤人声', width='small')
-            }
+        df_display['clickable_title'] = df_display.apply(
+            lambda row: f'<a href="{row["link"]}" target="_blank">{row["title"]}</a>', axis=1
         )
+        
+        # 使用HTML表格显示可点击标题
+        html_table = "<div style='height: 400px; overflow-y: auto; border: 1px solid #000;'>"
+        html_table += "<table style='width:100%; border-collapse: collapse;'>"
+        html_table += "<thead style='position: sticky; top: 0; background-color: #f8f9fa;'>"
+        html_table += "<tr style='border: 1px solid #000;'>"
+        html_table += "<th style='padding: 8px; border: 1px solid #000; text-align: left;'>标题</th>"
+        html_table += "<th style='padding: 8px; border: 1px solid #000; text-align: center;'>观看量</th>"
+        html_table += "<th style='padding: 8px; border: 1px solid #000; text-align: center;'>时长</th>"
+        html_table += "<th style='padding: 8px; border: 1px solid #000; text-align: center;'>发布日期</th>"
+        html_table += "<th style='padding: 8px; border: 1px solid #000; text-align: center;'>🎤人声</th>"
+        html_table += "</tr></thead><tbody>"
+        
+        for idx, row in df_display.iterrows():
+            html_table += f"<tr style='border: 1px solid #ddd;'>"
+            html_table += f"<td style='padding: 8px; border: 1px solid #ddd;'><a href='{row['link']}' target='_blank' style='color: #0066cc; text-decoration: none;'>{row['title']}</a></td>"
+            html_table += f"<td style='padding: 8px; border: 1px solid #ddd; text-align: center;'>{row['view_count']:,}</td>"
+            html_table += f"<td style='padding: 8px; border: 1px solid #ddd; text-align: center;'>{row['duration']}</td>"
+            html_table += f"<td style='padding: 8px; border: 1px solid #ddd; text-align: center;'>{row['published_date']}</td>"
+            html_table += f"<td style='padding: 8px; border: 1px solid #ddd; text-align: center;'>{'✅' if row['is_voiceover'] else '❌'}</td>"
+            html_table += "</tr>"
+        
+        html_table += "</tbody></table></div>"
+        
+        st.markdown(html_table, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
