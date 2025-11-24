@@ -167,16 +167,22 @@ def main():
     
     with col1:
         st.markdown("### 🔗 频道信息")
-        channel_url = st.text_input("YouTube频道链接", placeholder="https://www.youtube.com/@channelname")
+        channel_url = st.text_input("YouTube频道链接", 
+                                   value="https://www.youtube.com/@tiffanywangmeditation",
+                                   placeholder="https://www.youtube.com/@channelname")
         
     with col2:
         st.markdown("### 🔑 API密钥")
         api_key = st.text_input("YouTube API Key", type="password")
     
     if st.button("🚀 开始分析", use_container_width=True):
-        if not channel_url or not api_key:
-            st.error("❌ 请填写频道链接和API密钥")
+        if not api_key:
+            st.error("❌ 请填写API密钥")
             return
+        
+        # 如果没有输入频道链接，使用默认频道
+        if not channel_url:
+            channel_url = "https://www.youtube.com/@tiffanywangmeditation"
         
         try:
             youtube = build('youtube', 'v3', developerKey=api_key)
