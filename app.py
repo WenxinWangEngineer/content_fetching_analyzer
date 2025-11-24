@@ -113,7 +113,7 @@ def get_channel_info(youtube, channel_input):
     return None
 
 def get_videos(youtube, channel_id, max_results=100):
-    """获取频道视频"""
+    """获取频道所有视频，按观看量排序后返回前N个"""
     videos = []
     
     # 获取上传播放列表ID
@@ -124,13 +124,13 @@ def get_videos(youtube, channel_id, max_results=100):
     
     uploads_playlist_id = channel_response['items'][0]['contentDetails']['relatedPlaylists']['uploads']
     
-    # 获取视频列表
+    # 获取所有视频列表
     next_page_token = None
-    while len(videos) < max_results:
+    while True:
         playlist_response = youtube.playlistItems().list(
             part='snippet',
             playlistId=uploads_playlist_id,
-            maxResults=min(50, max_results - len(videos)),
+            maxResults=50,
             pageToken=next_page_token
         ).execute()
         
@@ -148,6 +148,9 @@ def get_videos(youtube, channel_id, max_results=100):
         next_page_token = playlist_response.get('nextPageToken')
         if not next_page_token:
             break
+    
+    # 按观看量降序排序
+    videos.sort(key=lambda x: int(x['statistics'].get('viewCount', 0)), reverse=True)
     
     return videos[:max_results]
 
