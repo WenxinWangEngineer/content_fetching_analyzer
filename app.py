@@ -308,13 +308,16 @@ def main():
             csv_filename = f"{st.session_state.channel_title.replace(' ', '_')}_videos_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
             st.download_button("📥 CSV", csv_data.encode('utf-8-sig'), csv_filename, "text/csv", use_container_width=True)
         
+        # 创建可点击标题列
+        df_display = df_sorted.copy()
+        df_display['clickable_title'] = df_sorted['link']
+        
         # 紧凑表格显示
         st.dataframe(
-            df_sorted[['title', 'link', 'view_count', 'duration', 'published_date', 'is_voiceover']],
+            df_display[['clickable_title', 'view_count', 'duration', 'published_date', 'is_voiceover']],
             use_container_width=True, height=400,
             column_config={
-                'title': st.column_config.TextColumn('标题', width='large'),
-                'link': st.column_config.LinkColumn('链接', width='small'),
+                'clickable_title': st.column_config.LinkColumn('标题', display_text=df_sorted['title'], width='large'),
                 'view_count': st.column_config.NumberColumn('观看量', width='small'),
                 'duration': st.column_config.TextColumn('时长', width='small'),
                 'published_date': st.column_config.TextColumn('发布日期', width='medium'),
