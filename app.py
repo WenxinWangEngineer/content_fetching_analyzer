@@ -131,8 +131,7 @@ def get_videos(youtube, channel_id, max_results=100):
             part='snippet',
             playlistId=uploads_playlist_id,
             maxResults=min(50, max_results - len(videos)),
-            pageToken=next_page_token,
-            order='date'
+            pageToken=next_page_token
         ).execute()
         
         video_ids = [item['snippet']['resourceId']['videoId'] for item in playlist_response['items']]
