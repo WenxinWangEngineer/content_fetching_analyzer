@@ -63,39 +63,53 @@ def extract_channel_id(url):
 def get_channel_info(youtube, channel_input):
     """获取频道信息"""
     try:
+        # 如果是完整的频道ID
         if channel_input.startswith('UC') and len(channel_input) == 24:
-            # 直接是频道ID
             response = youtube.channels().list(
                 part='snippet,statistics',
                 id=channel_input
             ).execute()
-        else:
-            # 尝试用户名或自定义URL
-            response = youtube.channels().list(
-                part='snippet,statistics',
-                forUsername=channel_input
-            ).execute()
-            
-            if not response['items']:
-                # 尝试搜索
-                search_response = youtube.search().list(
-                    part='snippet',
-                    q=channel_input,
-                    type='channel',
-                    maxResults=1
+            if response['items']:
+                return response['items'][0]
+        
+        # 尝试通过搜索找到频道
+        search_response = youtube.search().list(
+            part='snippet',
+            q=channel_input,
+            type='channel',
+            maxResults=5
+        ).execute()
+        
+        if search_response['items']:
+            # 查找最匹配的频道
+            for item in search_response['items']:
+                channel_id = item['snippet']['channelId']
+                channel_response = youtube.channels().list(
+                    part='snippet,statistics',
+                    id=channel_id
                 ).execute()
                 
-                if search_response['items']:
-                    channel_id = search_response['items'][0]['snippet']['channelId']
-                    response = youtube.channels().list(
-                        part='snippet,statistics',
-                        id=channel_id
-                    ).execute()
-        
-        if response['items']:
-            return response['items'][0]
-    except:
-        pass
+                if channel_response['items']:
+                    channel = channel_response['items'][0]
+                    # 检查是否匹配
+                    custom_url = channel['snippet'].get('customUrl', '').lower()
+                    if (channel_input.lower() in custom_url or 
+                        custom_url in channel_input.lower()):
+                        return channel
+            
+            # 如果没有精确匹配，返回第一个结果
+            channel_id = search_response['items'][0]['snippet']['channelId']
+            channel_response = youtube.channels().list(
+                part='snippet,statistics',
+                id=channel_id
+            ).execute()
+            
+            if channel_response['items']:
+                return channel_response['items'][0]
+                
+    except Exception as e:
+        print(f"Error getting channel info: {e}")
+    
     return None
 
 def get_videos(youtube, channel_id, max_results=100):
@@ -191,7 +205,13 @@ def main():
                 # 提取频道标识
                 channel_input = extract_channel_id(channel_url)
                 if not channel_input:
-                    channel_input = channel_url.split('/')[-1].replace('@', '')
+                    # 从URL中提取用户名
+                    if '@' in channel_url:
+                        channel_input = channel_url.split('@')[-1]
+                    else:
+                        channel_input = channel_url.split('/')[-1]
+                
+                print(f"Searching for channel: {channel_input}")  # Debug信息
                 
                 # 获取频道信息
                 channel_info = get_channel_info(youtube, channel_input)
