@@ -308,14 +308,32 @@ def main():
                 
                 # 显示结果
                 st.markdown("---")
-                st.markdown(f"### 📋 视频列表 ({len(video_data)} 个视频)")
+                
+                # 排序选择
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    st.markdown(f"### 📋 视频列表 ({len(video_data)} 个视频)")
+                with col2:
+                    sort_options = {
+                        "观看量 (高到低)": ("view_count", False),
+                        "观看量 (低到高)": ("view_count", True),
+                        "发布日期 (最新)": ("published_date", False),
+                        "发布日期 (最早)": ("published_date", True),
+                        "配音检测 (有配音)": ("is_voiceover", False),
+                        "配音检测 (无配音)": ("is_voiceover", True)
+                    }
+                    selected_sort = st.selectbox("📊 排序方式", list(sort_options.keys()))
+                    sort_column, ascending = sort_options[selected_sort]
+                    
+                    # 应用排序
+                    df_sorted = df.sort_values(by=sort_column, ascending=ascending)
                 
                 # 生成CSV文件名
                 csv_filename = f"{channel_title.replace(' ', '_')}_videos_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
                 
                 # 显示数据表格
                 st.dataframe(
-                    df[['title', 'view_count', 'duration', 'published_date', 'is_voiceover']],
+                    df_sorted[['title', 'view_count', 'duration', 'published_date', 'is_voiceover']],
                     use_container_width=True,
                     column_config={
                         'title': '标题',
@@ -326,8 +344,8 @@ def main():
                     }
                 )
                 
-                # 下载按钮 - 直接使用DataFrame转换为CSV字符串
-                csv_data = df.to_csv(index=False, encoding='utf-8-sig')
+                # 下载按钮 - 使用排序后的DataFrame
+                csv_data = df_sorted.to_csv(index=False, encoding='utf-8-sig')
                 st.download_button(
                     label="📥 下载完整CSV文件",
                     data=csv_data.encode('utf-8-sig'),
