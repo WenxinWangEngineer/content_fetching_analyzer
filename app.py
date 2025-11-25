@@ -112,7 +112,7 @@ def get_channel_info(youtube, channel_input):
     
     return None
 
-def get_videos(youtube, channel_id, max_results=100):
+def get_videos(youtube, channel_id):
     """获取频道所有视频，按观看量排序后返回前N个"""
     videos = []
     
@@ -152,7 +152,7 @@ def get_videos(youtube, channel_id, max_results=100):
     # 按观看量降序排序
     videos.sort(key=lambda x: int(x['statistics'].get('viewCount', 0)), reverse=True)
     
-    return videos[:max_results]
+    return videos
 
 def parse_duration(duration):
     """解析YouTube时长格式"""
@@ -216,7 +216,7 @@ def main():
     st.title("📊 YouTube频道分析器")
     
     # 紧凑输入区域
-    col1, col2, col3, col4, col5, col6 = st.columns([3, 2, 1, 1, 1, 1])
+    col1, col2, col3, col4, col5 = st.columns([3, 2, 1, 1, 1])
     
     with col1:
         channel_url = st.text_input("🔗 YouTube频道链接", 
@@ -229,9 +229,6 @@ def main():
                                type="password")
     
     with col3:
-        video_count = st.number_input("📊 视频数量", min_value=1, value=100, step=1)
-    
-    with col4:
         timezone_options = {
             "PT": "America/Los_Angeles", "ET": "America/New_York", 
             "CST": "Asia/Shanghai", "JST": "Asia/Tokyo",
@@ -240,10 +237,10 @@ def main():
         selected_tz = st.selectbox("🌍 时区", list(timezone_options.keys()))
         timezone_str = timezone_options[selected_tz]
     
-    with col5:
+    with col4:
         use_audio = st.checkbox("🎧 音频分析", value=False, disabled=not AUDIO_ANALYSIS_AVAILABLE)
     
-    with col6:
+    with col5:
         st.markdown("<br>", unsafe_allow_html=True)
         analyze_btn = st.button("🚀 分析", use_container_width=True)
     
@@ -296,9 +293,8 @@ def main():
                     st.markdown(f'<div class="metric-card"><h3>👀 观看</h3><h2>{view_count:,}</h2></div>', unsafe_allow_html=True)
             
             with st.spinner("📊 正在分析视频数据..."):
-                # 确定要获取的视频数量
-                max_videos = min(video_count, int(channel_info['statistics']['videoCount']))
-                videos = get_videos(youtube, channel_id, max_videos)
+                # 获取频道所有视频
+                videos = get_videos(youtube, channel_id)
                 
                 # 处理视频数据
                 video_data = []
